@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2017, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2018, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -655,9 +655,19 @@ CURLcode Curl_ntlm_core_mk_ntlmv2_hash(const char *user, size_t userlen,
                                        unsigned char *ntlmv2hash)
 {
   /* Unicode representation */
-  size_t identity_len = (userlen + domlen) * 2;
-  unsigned char *identity = malloc(identity_len);
+  size_t identity_len;
+  unsigned char *identity;
   CURLcode result = CURLE_OK;
+
+  /* we do the length checks below separately to avoid integer overflow risk
+     on extreme data lengths */
+  if((userlen > SIZE_T_MAX/2) ||
+     (domlen > SIZE_T_MAX/2) ||
+     ((userlen + domlen) > SIZE_T_MAX/2))
+    return CURLE_OUT_OF_MEMORY;
+
+  identity_len = (userlen + domlen) * 2;
+  identity = malloc(identity_len);
 
   if(!identity)
     return CURLE_OUT_OF_MEMORY;
