@@ -118,7 +118,9 @@ if (ENABLE_CURLDEBUG)
 endif()
 
 # For debug libs and exes, add "-d" postfix
-set(CMAKE_DEBUG_POSTFIX "-d" CACHE STRING "Set debug library postfix")
+if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
+  set(CMAKE_DEBUG_POSTFIX "-d")
+endif()
 
 # initialize CURL_LIBS
 set(CURL_LIBS "")
@@ -285,6 +287,7 @@ check_function_exists(gethostname HAVE_GETHOSTNAME)
 if(WIN32)
   check_library_exists_concat("ws2_32" getch        HAVE_LIBWS2_32)
   check_library_exists_concat("winmm"  getch        HAVE_LIBWINMM)
+  list(APPEND CURL_LIBS "advapi32")
 endif()
 
 # check SSL libraries
@@ -899,7 +902,7 @@ endif()
 check_symbol_exists(fsetxattr "${CURL_INCLUDES}" HAVE_FSETXATTR)
 if(HAVE_FSETXATTR)
   foreach(CURL_TEST HAVE_FSETXATTR_5 HAVE_FSETXATTR_6)
-    curl_internal_test_run(${CURL_TEST})
+    curl_internal_test(${CURL_TEST})
   endforeach(CURL_TEST)
 endif(HAVE_FSETXATTR)
 
@@ -979,7 +982,7 @@ foreach(CURL_TEST
     HAVE_GLIBC_STRERROR_R
     HAVE_POSIX_STRERROR_R
     )
-  curl_internal_test_run(${CURL_TEST})
+  curl_internal_test(${CURL_TEST})
 endforeach(CURL_TEST)
 
 # Check for reentrant

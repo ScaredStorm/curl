@@ -190,7 +190,13 @@ static CURLcode inflate_stream(struct connectdata *conn,
     z->next_out = (Bytef *) decomp;
     z->avail_out = DSIZ;
 
+#ifdef Z_BLOCK
+    /* Z_BLOCK is only available in zlib ver. >= 1.2.0.5 */
     status = inflate(z, Z_BLOCK);
+#else
+    /* fallback for zlib ver. < 1.2.0.5 */
+    status = inflate(z, Z_SYNC_FLUSH);
+#endif
 
     /* Flush output data if some. */
     if(z->avail_out != DSIZ) {
@@ -873,10 +879,9 @@ static contenc_writer *new_unencoding_writer(struct connectdata *conn,
                                              contenc_writer *downstream)
 {
   size_t sz = offsetof(contenc_writer, params) + handler->paramsize;
-  contenc_writer *writer = (contenc_writer *) malloc(sz);
+  contenc_writer *writer = (contenc_writer *) calloc(1, sz);
 
   if(writer) {
-    memset(writer, 0, sz);
     writer->handler = handler;
     writer->downstream = downstream;
     if(handler->init_writer(conn, writer)) {

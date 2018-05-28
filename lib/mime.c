@@ -787,10 +787,10 @@ static size_t read_encoded_part_content(curl_mimepart *part,
       st->bufbeg = 0;
       st->bufend = len;
     }
-    if(st->bufend >= sizeof st->buf)
+    if(st->bufend >= sizeof(st->buf))
       return cursize? cursize: READ_ERROR;    /* Buffer full. */
     sz = read_part_content(part, st->buf + st->bufend,
-                           sizeof st->buf - st->bufend);
+                           sizeof(st->buf) - st->bufend);
     switch(sz) {
     case 0:
       ateof = TRUE;
@@ -1193,7 +1193,10 @@ CURLcode Curl_mime_duppart(curl_mimepart *dst, const curl_mimepart *src)
   }
 
   /* Duplicate other fields. */
-  dst->encoder = src->encoder;
+  if(dst != NULL)
+    dst->encoder = src->encoder;
+  else
+    res = CURLE_WRITE_ERROR;
   if(!res)
     res = curl_mime_type(dst, src->mimetype);
   if(!res)
@@ -1202,7 +1205,7 @@ CURLcode Curl_mime_duppart(curl_mimepart *dst, const curl_mimepart *src)
     res = curl_mime_filename(dst, src->filename);
 
   /* If an error occurred, rollback. */
-  if(res)
+  if(res && dst)
     Curl_mime_cleanpart(dst);
 
   return res;
@@ -1217,7 +1220,7 @@ curl_mime *curl_mime_init(struct Curl_easy *easy)
 {
   curl_mime *mime;
 
-  mime = (curl_mime *) malloc(sizeof *mime);
+  mime = (curl_mime *) malloc(sizeof(*mime));
 
   if(mime) {
     mime->easy = easy;
@@ -1244,7 +1247,7 @@ curl_mime *curl_mime_init(struct Curl_easy *easy)
 /* Initialize a mime part. */
 void Curl_mime_initpart(curl_mimepart *part, struct Curl_easy *easy)
 {
-  memset((char *) part, 0, sizeof *part);
+  memset((char *) part, 0, sizeof(*part));
   part->easy = easy;
   mimesetstate(&part->state, MIMESTATE_BEGIN, NULL);
 }
@@ -1257,7 +1260,7 @@ curl_mimepart *curl_mime_addpart(curl_mime *mime)
   if(!mime)
     return NULL;
 
-  part = (curl_mimepart *) malloc(sizeof *part);
+  part = (curl_mimepart *) malloc(sizeof(*part));
 
   if(part) {
     Curl_mime_initpart(part, mime->easy);
@@ -1667,7 +1670,7 @@ const char *Curl_mime_contenttype(const char *filename)
     size_t len1 = strlen(filename);
     const char *nameend = filename + len1;
 
-    for(i = 0; i < sizeof ctts / sizeof ctts[0]; i++) {
+    for(i = 0; i < sizeof(ctts) / sizeof(ctts[0]); i++) {
       size_t len2 = strlen(ctts[i].extension);
 
       if(len1 >= len2 && strcasecompare(nameend - len2, ctts[i].extension))
